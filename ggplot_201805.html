@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>ggplot2 blitz</title>
+    <meta charset="utf-8">
+    <meta name="author" content="Rick Pack" />
+    <link href="ggplot_201805_files/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link href="ggplot_201805_files/remark-css-0.0.1/default-fonts.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# ggplot2 blitz
+## A xaringan presentation
+### Rick Pack
+### 2018/05/21
+
+---
+
+
+# We are going to turn this table of countries' oil production (look left)
+![oil production Wiki](Oil_Wiki.png)
+--
+# https://en.wikipedia.org/wiki/List_of_countries_by_oil_production
+
+---
+# Into this ggplot2 (R Package) graph of countries' oil production 
+![oil production graph](Oil_ggplot.png)
+
+# http://www.sharpsightlabs.com/blog/map-oil-production-country-r/
+
+---
+# This HTML5 presentation was created in RStudio with the Xaringan package by Yihui Xie
+![Xaringan pres](Xaringan_pres.png)
+
+--
+
+![Xaringan code](Xaringan_code.png)
+
+# get started with Xaringan using Yihui Xie's presentation at https://slides.yihui.name/xaringan/
+
+---
+#Yihui Xie - courtesy of usethis.com
+![Yihui Xie image](Yihui_Xie_water.png)
+
+# "This code is available on my Github page: https://github.com/RickPack/TriPASS_DataSci_ggplot2_201805
+
+---
+
+# sharpsightlobs.com R Code (map oil production by country) [slight mod] - page 1 / X
+
+```r
+#=============
+# LOAD PACKAGES, INSTALL IF NOT INSTALLED
+#=============
+list.of.packages &lt;- c("tidyverse", "sf", "rvest", "stringr", "scales", "viridis", "extrafont", "maps","formatR")
+new.packages &lt;- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages, repos = "http://cran.us.r-project.org")
+```
+
+---
+
+```r
+#=============
+# LOAD PACKAGES
+#=============
+# user Nate in https://stackoverflow.com/questions/14733732/cant-change-fonts-in-ggplot-geom-text #&lt;&lt;
+# "The key for my system was to call extrafont::loadfonts(device="win") prior to library(ggplot2)."
+# needed for Windows to eliminate "font family not found in Windows database error"
+# in Linux use X11Fonts()
+extrafont::font_import("C:/Windows/Fonts/", pattern = "GIL_____")
+```
+
+```
+## Exiting.
+```
+
+```r
+extrafont::loadfonts(device="win")
+library(tidyverse)
+```
+
+```
+## -- Attaching packages --------------------------------------------------------------- tidyverse 1.2.1 --
+```
+
+```
+## v ggplot2 2.2.1     v purrr   0.2.4
+## v tibble  1.4.2     v dplyr   0.7.5
+## v tidyr   0.8.1     v stringr 1.3.1
+## v readr   1.1.1     v forcats 0.3.0
+```
+
+```
+## -- Conflicts ------------------------------------------------------------------ tidyverse_conflicts() --
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()
+```
+
+```r
+library(sf)
+```
+
+```
+## Linking to GEOS 3.6.1, GDAL 2.2.3, proj.4 4.9.3
+```
+
+```r
+library(rvest)
+```
+
+```
+## Loading required package: xml2
+```
+
+```
+## 
+## Attaching package: 'rvest'
+```
+
+```
+## The following object is masked from 'package:purrr':
+## 
+##     pluck
+```
+
+```
+## The following object is masked from 'package:readr':
+## 
+##     guess_encoding
+```
+
+```r
+library(stringr)
+# I love the percent function in the scales package
+library(scales) #&lt;&lt;
+```
+
+```
+## 
+## Attaching package: 'scales'
+```
+
+```
+## The following object is masked from 'package:purrr':
+## 
+##     discard
+```
+
+```
+## The following object is masked from 'package:readr':
+## 
+##     col_factor
+```
+
+```r
+# for color palettes: #&lt;&lt;
+library(viridis) #&lt;&lt;
+```
+
+```
+## Loading required package: viridisLite
+```
+
+```
+## 
+## Attaching package: 'viridis'
+```
+
+```
+## The following object is masked from 'package:scales':
+## 
+##     viridis_pal
+```
+
+
+```r
+scales::percent(3/4)
+```
+
+[1] "75%"
+
+---
+# An easily produced ggplot2 scatterplot
+
+```r
+# mpg is a data frame loaded when one loads the ggplot2 package (loaded in
+# tidyverse)
+ggplot(mpg, aes(displ, hwy, colour = class)) + geom_point() + ggtitle(label = "Fuel economy data from 1999 and 2008 for 38 popular models of car", 
+    subtitle = "from the mpg data frame installed with ggplot2")
+```
+
+&lt;img src="ggplot_201805_files/figure-html/unnamed-chunk-4-1.png" width="672" /&gt;
+![cars_ggplot](cars_ggplot.png)
+# from http://ggplot2.tidyverse.org/
+
+---
+# sharpsightlobs.com R Code (map oil production by country) [slight mod] - page 2 / X
+
+```r
+# ============ SCRAPE DATA ============
+
+df.oil &lt;- read_html("https://en.wikipedia.org/wiki/List_of_countries_by_oil_production") %&gt;% 
+    html_nodes("table") %&gt;% .[[1]] %&gt;% html_table()
+```
+![Wiki html]("Wiki_html.png")
+
+---
+# sharpsightlobs.com R Code (map oil production by country) [slight mod] - page 3 / X
+
+```r
+# ==================== CHANGE COLUMN NAMES ====================
+print(names(df.oil))
+```
+
+```
+## [1] ""                                 "Country"                         
+## [3] "Oil Production(bbl/day, 2016)[1]"
+```
+
+```r
+colnames(df.oil) &lt;- c("rank", "country", "oil_bbl_per_day")
+
+# ============================= WRANGLE VARIABLES INTO SHAPE
+# =============================
+
+
+#----------------------------------
+# COERCE 'rank' VARIABLE TO INTEGER
+#----------------------------------
+
+# What is the class of each variable?
+lapply(df.oil, class)
+```
+
+```
+## $rank
+## [1] "character"
+## 
+## $country
+## [1] "character"
+## 
+## $oil_bbl_per_day
+## [1] "character"
+```
+
+```r
+df.oil &lt;- df.oil %&gt;% mutate(rank = as.integer(rank))
+```
+
+```
+## Warning in evalq(as.integer(rank), &lt;environment&gt;): NAs introduced by
+## coercion
+```
+
+```r
+# glimpse is installed with the tidyverse See class and sampling of values
+# Commas in oil_bbl_per_day are a problem, country sometimes shows OPEC
+df.oil %&gt;% glimpse()
+```
+
+```
+## Observations: 99
+## Variables: 3
+## $ rank            &lt;int&gt; NA, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,...
+## $ country         &lt;chr&gt; "World Production", "Russia", "Saudi Arabia (O...
+## $ oil_bbl_per_day &lt;chr&gt; "80,622,000", "10,551,497", "10,460,710", "8,8...
+```
+
+
+
+```r
+#---------------------------------------------------
+# WRANGLE FROM CHARACTER TO NUMERIC: oil_bbl_per_day
+#---------------------------------------------------
+
+df.oil &lt;- df.oil %&gt;% mutate(oil_bbl_per_day = oil_bbl_per_day %&gt;% str_replace_all(',','') %&gt;% as.integer())
+
+
+#===========================
+#CREATE VARIABLE: 'opec_ind'
+#===========================
+
+df.oil &lt;- df.oil %&gt;% mutate(opec_ind = if_else(str_detect(country, 'OPEC'), 1, 0))
+df.oil &lt;- df.oil %&gt;% mutate(country = country %&gt;% 
+                     str_replace(' \\(OPEC\\)', '') %&gt;% str_replace('\\s{2,}',' '))
+# inspect
+df.oil %&gt;% glimpse()
+```
+
+```
+## Observations: 99
+## Variables: 4
+## $ rank            &lt;int&gt; NA, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,...
+## $ country         &lt;chr&gt; "World Production", "Russia", "Saudi Arabia", ...
+## $ oil_bbl_per_day &lt;int&gt; 80622000, 10551497, 10460710, 8875817, 4451516...
+## $ opec_ind        &lt;dbl&gt; 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0...
+```
+
+```r
+#------------------------------------------
+# EXAMINE OPEC COUNTRIES
+# - here, we'll just visually inspect
+#   to make sure that the names are correct
+#------------------------------------------
+
+df.oil %&gt;% 
+  filter(opec_ind == 1) %&gt;%
+  select(country)
+```
+
+```
+##                 country
+## 1          Saudi Arabia
+## 2                  Iraq
+## 3                  Iran
+## 4  United Arab Emirates
+## 5                Kuwait
+## 6             Venezuela
+## 7               Nigeria
+## 8                Angola
+## 9                 Qatar
+## 10              Algeria
+## 11                Libya
+## 12              Ecuador
+## 13    Equatorial Guinea
+## 14                Gabon
+```
+
+```r
+#==================
+# REORDER VARIABLES
+#==================
+
+df.oil &lt;- df.oil %&gt;% select(rank, country, opec_ind, oil_bbl_per_day)
+
+#========
+# GET MAP
+#========
+# map_data turns data "from the maps package in to a data frame suitable for plotting with ggplot2".
+map.world &lt;- map_data('world')
+```
+
+```
+## 
+## Attaching package: 'maps'
+```
+
+```
+## The following object is masked from 'package:purrr':
+## 
+##     map
+```
+
+```r
+#==========================
+# CHECK FOR JOIN MISMATCHES
+#==========================
+
+mismatch_frm &lt;- anti_join(df.oil, map.world, by = c('country' = 'region'))
+print(head(mismatch_frm))
+```
+
+```
+##   rank                country opec_ind oil_bbl_per_day
+## 1   NA       World Production        0        80622000
+## 2    3          United States        0         8875817
+## 3   21         United Kingdom        0          939760
+## 4   31 Congo, Republic of the        0          308363
+## 5   35  Sudan and South Sudan        0          255000
+## 6   47    Trinidad and Tobago        0           60090
+```
+
+```r
+#=====================
+# RECODE COUNTRY NAMES
+#=====================
+
+map.world %&gt;%
+  group_by(region) %&gt;%
+  summarise() %&gt;%
+  print(n = Inf)
+```
+
+```
+## # A tibble: 252 x 1
+##     region                             
+##     &lt;chr&gt;                              
+##   1 Afghanistan                        
+##   2 Albania                            
+##   3 Algeria                            
+##   4 American Samoa                     
+##   5 Andorra                            
+##   6 Angola                             
+##   7 Anguilla                           
+##   8 Antarctica                         
+##   9 Antigua                            
+##  10 Argentina                          
+##  11 Armenia                            
+##  12 Aruba                              
+##  13 Ascension Island                   
+##  14 Australia                          
+##  15 Austria                            
+##  16 Azerbaijan                         
+##  17 Azores                             
+##  18 Bahamas                            
+##  19 Bahrain                            
+##  20 Bangladesh                         
+##  21 Barbados                           
+##  22 Barbuda                            
+##  23 Belarus                            
+##  24 Belgium                            
+##  25 Belize                             
+##  26 Benin                              
+##  27 Bermuda                            
+##  28 Bhutan                             
+##  29 Bolivia                            
+##  30 Bonaire                            
+##  31 Bosnia and Herzegovina             
+##  32 Botswana                           
+##  33 Brazil                             
+##  34 Brunei                             
+##  35 Bulgaria                           
+##  36 Burkina Faso                       
+##  37 Burundi                            
+##  38 Cambodia                           
+##  39 Cameroon                           
+##  40 Canada                             
+##  41 Canary Islands                     
+##  42 Cape Verde                         
+##  43 Cayman Islands                     
+##  44 Central African Republic           
+##  45 Chad                               
+##  46 Chagos Archipelago                 
+##  47 Chile                              
+##  48 China                              
+##  49 Christmas Island                   
+##  50 Cocos Islands                      
+##  51 Colombia                           
+##  52 Comoros                            
+##  53 Cook Islands                       
+##  54 Costa Rica                         
+##  55 Croatia                            
+##  56 Cuba                               
+##  57 Curacao                            
+##  58 Cyprus                             
+##  59 Czech Republic                     
+##  60 Democratic Republic of the Congo   
+##  61 Denmark                            
+##  62 Djibouti                           
+##  63 Dominica                           
+##  64 Dominican Republic                 
+##  65 Ecuador                            
+##  66 Egypt                              
+##  67 El Salvador                        
+##  68 Equatorial Guinea                  
+##  69 Eritrea                            
+##  70 Estonia                            
+##  71 Ethiopia                           
+##  72 Falkland Islands                   
+##  73 Faroe Islands                      
+##  74 Fiji                               
+##  75 Finland                            
+##  76 France                             
+##  77 French Guiana                      
+##  78 French Polynesia                   
+##  79 French Southern and Antarctic Lands
+##  80 Gabon                              
+##  81 Gambia                             
+##  82 Georgia                            
+##  83 Germany                            
+##  84 Ghana                              
+##  85 Greece                             
+##  86 Greenland                          
+##  87 Grenada                            
+##  88 Grenadines                         
+##  89 Guadeloupe                         
+##  90 Guam                               
+##  91 Guatemala                          
+##  92 Guernsey                           
+##  93 Guinea                             
+##  94 Guinea-Bissau                      
+##  95 Guyana                             
+##  96 Haiti                              
+##  97 Heard Island                       
+##  98 Honduras                           
+##  99 Hungary                            
+## 100 Iceland                            
+## 101 India                              
+## 102 Indonesia                          
+## 103 Iran                               
+## 104 Iraq                               
+## 105 Ireland                            
+## 106 Isle of Man                        
+## 107 Israel                             
+## 108 Italy                              
+## 109 Ivory Coast                        
+## 110 Jamaica                            
+## 111 Japan                              
+## 112 Jersey                             
+## 113 Jordan                             
+## 114 Kazakhstan                         
+## 115 Kenya                              
+## 116 Kiribati                           
+## 117 Kosovo                             
+## 118 Kuwait                             
+## 119 Kyrgyzstan                         
+## 120 Laos                               
+## 121 Latvia                             
+## 122 Lebanon                            
+## 123 Lesotho                            
+## 124 Liberia                            
+## 125 Libya                              
+## 126 Liechtenstein                      
+## 127 Lithuania                          
+## 128 Luxembourg                         
+## 129 Macedonia                          
+## 130 Madagascar                         
+## 131 Madeira Islands                    
+## 132 Malawi                             
+## 133 Malaysia                           
+## 134 Maldives                           
+## 135 Mali                               
+## 136 Malta                              
+## 137 Marshall Islands                   
+## 138 Martinique                         
+## 139 Mauritania                         
+## 140 Mauritius                          
+## 141 Mayotte                            
+## 142 Mexico                             
+## 143 Micronesia                         
+## 144 Moldova                            
+## 145 Monaco                             
+## 146 Mongolia                           
+## 147 Montenegro                         
+## 148 Montserrat                         
+## 149 Morocco                            
+## 150 Mozambique                         
+## 151 Myanmar                            
+## 152 Namibia                            
+## 153 Nauru                              
+## 154 Nepal                              
+## 155 Netherlands                        
+## 156 Nevis                              
+## 157 New Caledonia                      
+## 158 New Zealand                        
+## 159 Nicaragua                          
+## 160 Niger                              
+## 161 Nigeria                            
+## 162 Niue                               
+## 163 Norfolk Island                     
+## 164 North Korea                        
+## 165 Northern Mariana Islands           
+## 166 Norway                             
+## 167 Oman                               
+## 168 Pakistan                           
+## 169 Palau                              
+## 170 Palestine                          
+## 171 Panama                             
+## 172 Papua New Guinea                   
+## 173 Paraguay                           
+## 174 Peru                               
+## 175 Philippines                        
+## 176 Pitcairn Islands                   
+## 177 Poland                             
+## 178 Portugal                           
+## 179 Puerto Rico                        
+## 180 Qatar                              
+## 181 Republic of Congo                  
+## 182 Reunion                            
+## 183 Romania                            
+## 184 Russia                             
+## 185 Rwanda                             
+## 186 Saba                               
+## 187 Saint Barthelemy                   
+## 188 Saint Helena                       
+## 189 Saint Kitts                        
+## 190 Saint Lucia                        
+## 191 Saint Martin                       
+## 192 Saint Pierre and Miquelon          
+## 193 Saint Vincent                      
+## 194 Samoa                              
+## 195 San Marino                         
+## 196 Sao Tome and Principe              
+## 197 Saudi Arabia                       
+## 198 Senegal                            
+## 199 Serbia                             
+## 200 Seychelles                         
+## 201 Siachen Glacier                    
+## 202 Sierra Leone                       
+## 203 Singapore                          
+## 204 Sint Eustatius                     
+## 205 Sint Maarten                       
+## 206 Slovakia                           
+## 207 Slovenia                           
+## 208 Solomon Islands                    
+## 209 Somalia                            
+## 210 South Africa                       
+## 211 South Georgia                      
+## 212 South Korea                        
+## 213 South Sandwich Islands             
+## 214 South Sudan                        
+## 215 Spain                              
+## 216 Sri Lanka                          
+## 217 Sudan                              
+## 218 Suriname                           
+## 219 Swaziland                          
+## 220 Sweden                             
+## 221 Switzerland                        
+## 222 Syria                              
+## 223 Taiwan                             
+## 224 Tajikistan                         
+## 225 Tanzania                           
+## 226 Thailand                           
+## 227 Timor-Leste                        
+## 228 Tobago                             
+## 229 Togo                               
+## 230 Tonga                              
+## 231 Trinidad                           
+## 232 Tunisia                            
+## 233 Turkey                             
+## 234 Turkmenistan                       
+## 235 Turks and Caicos Islands           
+## 236 Uganda                             
+## 237 UK                                 
+## 238 Ukraine                            
+## 239 United Arab Emirates               
+## 240 Uruguay                            
+## 241 USA                                
+## 242 Uzbekistan                         
+## 243 Vanuatu                            
+## 244 Vatican                            
+## 245 Venezuela                          
+## 246 Vietnam                            
+## 247 Virgin Islands                     
+## 248 Wallis and Futuna                  
+## 249 Western Sahara                     
+## 250 Yemen                              
+## 251 Zambia                             
+## 252 Zimbabwe
+```
+
+```r
+df.oil &lt;- df.oil %&gt;%  mutate(country = recode(country, 
+                                   `United States` = 'USA'
+                                 , `United Kingdom` = 'UK'
+                                 , `Congo, Democratic Republic of the` = 'Democratic Republic of the Congo'
+                                 , `Trinidad and Tobago` = 'Trinidad'
+                                 , `Sudan and South Sudan` = 'Sudan'
+                                 #, `Sudan and  South Sudan` = 'South Sudan'
+                                 , `Congo, Republic of the` = 'Republic of Congo'
+                                 )
+                   )
+#-----------------------
+# JOIN DATASETS TOGETHER
+#-----------------------
+
+map.oil &lt;- left_join( map.world, df.oil, by = c('region' = 'country')) 
+
+#=====
+# PLOT
+#=====
+
+# BASIC (this is a first draft)
+
+ggplot(map.oil, aes( x = long, y = lat, group = group )) +
+  geom_polygon(aes(fill = oil_bbl_per_day))
+```
+
+&lt;img src="ggplot_201805_files/figure-html/unnamed-chunk-7-1.png" width="672" /&gt;
+
+```r
+# Top 5 countries 
+map.oil %&gt;% distinct(rank, region) %&gt;% top_n(-5, rank) %&gt;% arrange(rank) %&gt;% select(region)
+```
+
+```
+##         region
+## 1       Russia
+## 2 Saudi Arabia
+## 3          USA
+## 4         Iraq
+## 5         Iran
+```
+
+```r
+# PROFESSIONAL ELEGANCE (this is a first draft)
+  
+gill_map &lt;-
+ ggplot(map.oil, aes( x = long, y = lat, group = group )) +
+  geom_polygon(aes(fill = oil_bbl_per_day)) +
+  scale_fill_gradientn(colours = c('#461863','#404E88','#2A8A8C','#7FD157','#F9E53F')
+                       ,values = scales::rescale(c(100,96581,822675,3190373,10000000))
+                       ,labels = comma
+                       ,breaks = c(100,96581,822675,3190373,10000000)
+                       ) +
+  guides(fill = guide_legend(reverse = T)) +
+  labs(fill = 'bbl/day'
+       ,title = 'Oil Production by Country'
+       ,subtitle = 'Barrels per day, 2016'
+       ,x = NULL
+       ,y = NULL) +
+  theme(text = element_text(family = 'Gill Sans MT', color = '#EEEEEE')
+        ,plot.title = element_text(size = 28)
+        ,plot.subtitle = element_text(size = 14)
+        ,axis.ticks = element_blank()
+        ,axis.text = element_blank()
+        ,panel.grid = element_blank()
+        ,panel.background = element_rect(fill = '#333333')
+        ,plot.background = element_rect(fill = '#333333')
+        ,legend.position = c(.18,.36)
+        ,legend.background = element_blank()
+        ,legend.key = element_blank()
+        ) +
+  annotate(geom = 'text'
+           ,label = 'Source: U.S. Energy Information Administration\nhttps://en.wikipedia.org/wiki/List_of_countries_by_oil_production'
+           ,x = 18, y = -55
+           ,size = 3
+           ,family = 'Gill Sans MT'
+           ,color = '#CCCCCC'
+           ,hjust = 'left'
+           )
+orig_map &lt;-
+ ggplot(map.oil, aes( x = long, y = lat, group = group )) +
+  geom_polygon(aes(fill = oil_bbl_per_day)) +
+  scale_fill_gradientn(colours = c('#461863','#404E88','#2A8A8C','#7FD157','#F9E53F')
+                       ,values = scales::rescale(c(100,96581,822675,3190373,10000000))
+                       ,labels = comma
+                       ,breaks = c(100,96581,822675,3190373,10000000)
+                       ) +
+  guides(fill = guide_legend(reverse = T)) +
+  labs(fill = 'bbl/day'
+       ,title = 'Oil Production by Country'
+       ,subtitle = 'Barrels per day, 2016'
+       ,x = NULL
+       ,y = NULL) +
+  theme(text = element_text(color = '#EEEEEE')
+        ,plot.title = element_text(size = 28)
+        ,plot.subtitle = element_text(size = 14)
+        ,axis.ticks = element_blank()
+        ,axis.text = element_blank()
+        ,panel.grid = element_blank()
+        ,panel.background = element_rect(fill = '#333333')
+        ,plot.background = element_rect(fill = '#333333')
+        ,legend.position = c(.18,.36)
+        ,legend.background = element_blank()
+        ,legend.key = element_blank()
+        ) +
+  annotate(geom = 'text'
+           ,label = 'Source: U.S. Energy Information Administration\nhttps://en.wikipedia.org/wiki/List_of_countries_by_oil_production'
+           ,x = 18, y = -55
+           ,size = 3
+           ,color = '#CCCCCC'
+           ,hjust = 'left'
+           )
+gill_map
+```
+
+```
+## Warning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, :
+## font family not found in Windows font database
+
+## Warning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, :
+## font family not found in Windows font database
+
+## Warning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, :
+## font family not found in Windows font database
+
+## Warning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, :
+## font family not found in Windows font database
+
+## Warning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, :
+## font family not found in Windows font database
+
+## Warning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, :
+## font family not found in Windows font database
+```
+
+```
+## Warning in grid.Call.graphics(C_text, as.graphicsAnnot(x$label), x$x, x
+## $y, : font family not found in Windows font database
+
+## Warning in grid.Call.graphics(C_text, as.graphicsAnnot(x$label), x$x, x
+## $y, : font family not found in Windows font database
+
+## Warning in grid.Call.graphics(C_text, as.graphicsAnnot(x$label), x$x, x
+## $y, : font family not found in Windows font database
+```
+
+```
+## Warning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, :
+## font family not found in Windows font database
+
+## Warning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, :
+## font family not found in Windows font database
+```
+
+&lt;img src="ggplot_201805_files/figure-html/unnamed-chunk-7-2.png" width="672" /&gt;
+
+---
+# Default [ (theme_get() ] vs. Gill Sans font
+## font family not found in Windows font database
+![map original font](oilprod_origfont.png)
+--
+## Gill Sans after 
+![map Gill Sans font](oilprod_gillfont.png)
+
+---
+# Same but using grid.arrange from the gridExtra package
+
+```r
+if (!require("grid")) install.packages("grid", repos = "http://cran.us.r-project.org")
+```
+
+```
+## Loading required package: grid
+```
+
+```r
+if (!require("gridExtra")) install.packages("gridExtra", repos = "http://cran.us.r-project.org")
+```
+
+```
+## Loading required package: gridExtra
+```
+
+```
+## 
+## Attaching package: 'gridExtra'
+```
+
+```
+## The following object is masked from 'package:dplyr':
+## 
+##     combine
+```
+
+```r
+gridExtra::grid.arrange(orig_map, gill_map , nrow = 2, heights = c(2,2)) 
+```
+
+```
+## Warning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, :
+## font family not found in Windows font database
+
+## Warning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, :
+## font family not found in Windows font database
+
+## Warning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, :
+## font family not found in Windows font database
+
+## Warning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, :
+## font family not found in Windows font database
+
+## Warning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, :
+## font family not found in Windows font database
+
+## Warning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, :
+## font family not found in Windows font database
+```
+
+```
+## Warning in grid.Call.graphics(C_text, as.graphicsAnnot(x$label), x$x, x
+## $y, : font family not found in Windows font database
+
+## Warning in grid.Call.graphics(C_text, as.graphicsAnnot(x$label), x$x, x
+## $y, : font family not found in Windows font database
+
+## Warning in grid.Call.graphics(C_text, as.graphicsAnnot(x$label), x$x, x
+## $y, : font family not found in Windows font database
+```
+
+```
+## Warning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, :
+## font family not found in Windows font database
+
+## Warning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, :
+## font family not found in Windows font database
+```
+
+&lt;img src="ggplot_201805_files/figure-html/unnamed-chunk-8-1.png" width="672" /&gt;
+---
+# also see grid.arrange in the code from the "Applying Data Science fundamentals to Stock Market Data" 
+# TriPASS Data Sci presentation by Conrad D'Cruz and Yin-Ting Chou
+
+![Stocks Meetup](stocks_meetup.png)
+
+# https://github.com/choux130/EU_TSClustering_101117/blob/master/TSClustering/code_1024/execute_funs.R
+# https://www.meetup.com/tripass/events/244117529/
+
+---
+# References
+* http://www.sharpsightlabs.com/blog/map-public-debt-ggplot2/
+* http://www.sharpsightlabs.com/blog/map-oil-production-country-r/
+* https://www.rstudio.com/wp-content/uploads/2016/03/rmarkdown-cheatsheet-2.0.pdf
+    </textarea>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create();
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function() {
+  var d = document, s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})();</script>
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+  }
+});
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://cdn.bootcss.com/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
