@@ -2,42 +2,68 @@
 title: "ggplot2 blitz"
 subtitle: "A xaringan presentation"
 author: "Rick Pack"
-date: "2018/05/21"
+date: "2018/05/22"
 output:
     xaringan::moon_reader:
     css: "my-theme.css"
 lib_dir: libs
 nature:
     highlightStyle: github
-highlightLines: true
+    highlightLines: true
 ---
 
 # We are going to turn this table of countries' oil production (look left)
-![oil production Wiki](Oil_Wiki.png)
---
-# https://en.wikipedia.org/wiki/List_of_countries_by_oil_production
+![oil production Wiki](C:/Users/Packr1/Documents/Personal/SQL_UG_DataSci/ggplot_201805/Oil_Wiki.png)
+
+#### https://en.wikipedia.org/wiki/List_of_countries_by_oil_production
 
 ---
 # Into this ggplot2 (R Package) graph of countries' oil production 
-![oil production graph](Oil_ggplot.png)
+![oil production graph](C:/Users/Packr1/Documents/Personal/SQL_UG_DataSci/ggplot_201805/Oil_ggplot.png)
 
-# http://www.sharpsightlabs.com/blog/map-oil-production-country-r/
+#### http://www.sharpsightlabs.com/blog/map-oil-production-country-r/
 
 ---
-# This HTML5 presentation was created in RStudio with the Xaringan package by Yihui Xie
-![Xaringan pres](Xaringan_pres.png)
+### This HTML5 presentation was created in RStudio with the Xaringan package by Yihui Xie
+![Xaringan pres](C:/Users/Packr1/Documents/Personal/SQL_UG_DataSci/ggplot_201805/Xaringan_pres.png)
 
 --
 
-![Xaringan code](Xaringan_code.png)
+![Xaringan code](C:/Users/Packr1/Documents/Personal/SQL_UG_DataSci/ggplot_201805/Xaringan_code.png)
 
 # get started with Xaringan using Yihui Xie's presentation at https://slides.yihui.name/xaringan/
 
 ---
-#Yihui Xie - courtesy of usethis.com
-![Yihui Xie image](Yihui_Xie_water.png)
+###Yihui Xie - courtesy of usethis.com
+![Yihui Xie image](C:/Users/Packr1/Documents/Personal/SQL_UG_DataSci/ggplot_201805/Yihui_Xie_water.png)
 
-# "This code is available on my Github page: https://github.com/RickPack/TriPASS_DataSci_ggplot2_201805
+### This code is available on my Github page: https://github.com/RickPack/TriPASS_DataSci_ggplot2_201805
+
+---
+
+### What is xaringan? Why xaringan? (Page 1 / 2)
+* xaringan adds remark.js features for your HTML5 presentation
+* For example three dashes (---) create a new slide and two dashes (--) separates content on a slide
+
+#### Two dashes 
+Left image
+--
+Right image 
+--
+* You can even highlight code:
+```{r tidy=FALSE}
+if (TRUE) {
+{{ message("Very important!") }}
+}
+```
+
+---
+### What is xaringan? Why xaringan? (Page 2 / 2)
+* Yihui Xie gives many reasons "why xaringan" in his "Why xaringan / remark.js for HTML5 Presentations?" blog post
++ https://yihui.name/en/2017/08/why-xaringan-remark-js/
+* He notes in a footnote: "There are people who are really comfortable with LaTeX, which is totally fine."
+* The xaringan-produced "Presentation Ninja with xaringan" by Xie gives a nice summary and was just updated 2018-05-21!
++ https://slides.yihui.name/xaringan/
 
 ---
 
@@ -46,9 +72,9 @@ highlightLines: true
 #=============
 # LOAD PACKAGES, INSTALL IF NOT INSTALLED
 #=============
-list.of.packages <- c("tidyverse", "sf", "rvest", "stringr", "scales", "viridis", "extrafont", "maps","formatR")
+list.of.packages <- c("tidyverse", "sf", "rvest", "stringr", "scales", "viridis")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
-if(length(new.packages)) install.packages(new.packages, repos = "http://cran.us.r-project.org")
+if(length(new.packages)) install.packages(new.packages)
 ```
 
 ---
@@ -87,7 +113,7 @@ ggplot(mpg, aes(displ, hwy, colour = class)) +
   ggtitle(label = "Fuel economy data from 1999 and 2008 for 38 popular models of car",
           subtitle = "from the mpg data frame installed with ggplot2")
 ```
-![cars_ggplot](cars_ggplot.png)
+![cars_ggplot](C:/Users/Packr1/Documents/Personal/SQL_UG_DataSci/ggplot_201805/cars_ggplot.png)
 # from http://ggplot2.tidyverse.org/
 
 ---
@@ -97,12 +123,13 @@ ggplot(mpg, aes(displ, hwy, colour = class)) +
 # SCRAPE DATA
 #============
 
-df.oil <- read_html("https://en.wikipedia.org/wiki/List_of_countries_by_oil_production") %>%
+#df.oil <- read_html("https://en.wikipedia.org/wiki/List_of_countries_by_oil_production") %>%
+df.oil <- read_html("C:/Users/Packr1/Documents/Personal/SQL_UG_DataSci/countries_oil_prod_Wikipedia.html") %>%
   html_nodes("table") %>%
   .[[1]] %>%
   html_table()
 ```
-![Wiki html]("Wiki_html.png")
+![Wiki html]("C:/Users/Packr1/Documents/Personal/SQL_UG_DataSci/ggplot_201805/Wiki_html.png")
 
 ---
 # sharpsightlobs.com R Code (map oil production by country) [slight mod] - page 3 / X
@@ -292,23 +319,23 @@ gill_map
 ---
 # Default [ (theme_get() ] vs. Gill Sans font
 ## font family not found in Windows font database
-![map original font](oilprod_origfont.png)
+![map original font](C:/Users/Packr1/Documents/Personal/SQL_UG_DataSci/ggplot_201805/oilprod_origfont.png)
 --
 ## Gill Sans after 
-![map Gill Sans font](oilprod_gillfont.png)
+![map Gill Sans font](C:/Users/Packr1/Documents/Personal/SQL_UG_DataSci/ggplot_201805/oilprod_gillfont.png)
 
 ---
 # Same but using grid.arrange from the gridExtra package
 ```{r tidy=FALSE}
-if (!require("grid")) install.packages("grid", repos = "http://cran.us.r-project.org")
-if (!require("gridExtra")) install.packages("gridExtra", repos = "http://cran.us.r-project.org")
+if (!require("grid")) install.packages("grid")
+if (!require("gridExtra")) install.packages("gridExtra")
 gridExtra::grid.arrange(orig_map, gill_map , nrow = 2, heights = c(2,2)) 
 ```
 ---
 # also see grid.arrange in the code from the "Applying Data Science fundamentals to Stock Market Data" 
 # TriPASS Data Sci presentation by Conrad D'Cruz and Yin-Ting Chou
 
-![Stocks Meetup](stocks_meetup.png)
+![Stocks Meetup](C:/Users/Packr1/Documents/Personal/SQL_UG_DataSci/ggplot_201805/stocks_meetup.png)
 
 # https://github.com/choux130/EU_TSClustering_101117/blob/master/TSClustering/code_1024/execute_funs.R
 # https://www.meetup.com/tripass/events/244117529/
